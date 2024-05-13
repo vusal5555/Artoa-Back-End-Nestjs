@@ -1,4 +1,3 @@
-// http-exception.filter.ts
 import {
   ExceptionFilter,
   Catch,
@@ -19,7 +18,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
-      message: exception.message, // Ensure the exception message is sent in the response
+      message: exception.message,
     });
   }
 }

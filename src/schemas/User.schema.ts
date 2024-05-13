@@ -1,8 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
-import mongoose from 'mongoose';
+import { Document, Schema as MongooseSchema } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
-import { Order, OrderSchema } from './Order.schema';
+import { Order } from './Order.schema';
 // import { ReviewSchema } from './Arist.schema'; // Assuming these are correct paths
 // import { OrderSchema } from './Order.schema'; // Assuming these are correct paths
 
@@ -73,7 +72,7 @@ export class User {
   @Prop([{}])
   notifications: Array<any>;
 
-  @Prop({ type: OrderSchema })
+  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Order' }] })
   orders: Order[];
 }
 

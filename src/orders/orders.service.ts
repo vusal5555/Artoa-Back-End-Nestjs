@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
@@ -58,7 +58,10 @@ export class OrdersService {
     const user = await this.userModel.findById(req.user._id);
 
     if (user.role === 'artist') {
-      throw new Error('You are an artist, You cannot create an order');
+      throw new HttpException(
+        'You are an artist, You cannot create an order',
+        403,
+      );
     }
 
     const artists = await this.userModel
@@ -71,6 +74,8 @@ export class OrdersService {
     const createOrder = (await order.save()) as Order & { createdAt: Date };
 
     // user.orders.push(createOrder); //come back to it later
+
+    // user.orders.push(order);
 
     await user.save();
 
@@ -113,12 +118,11 @@ export class OrdersService {
 
   async findOne(id: string, req: any, res: any) {
     const order = await this.orderModel
-      .findById(req.params.id)
+      .findById(id)
       .populate('user', 'name email spentMoney proposals');
 
     if (!order) {
-      res.status(404);
-      throw new Error('Order not found');
+      throw new HttpException('Order not found', 404);
     }
 
     res.status(200).json(order);
@@ -158,7 +162,10 @@ export class OrdersService {
       });
 
       if (userArtist.role === 'customer') {
-        throw new Error('You are an customer, You cannot create a bid');
+        throw new HttpException(
+          'You are an customer, You cannot create a bid',
+          403,
+        );
       }
 
       // If the bid is created
@@ -175,8 +182,7 @@ export class OrdersService {
         res.status(200).json({ msg: 'Bid added' });
       } else {
         // If the bid is not created, respond with a 404 status and throw an error
-        res.status(404);
-        throw new Error('Bid not created');
+        throw new HttpException('Bid not created', 500);
       }
     }
   }
@@ -196,8 +202,7 @@ export class OrdersService {
     // If no bid is found with the provided ID, set the response status to 404 (Not Found)
     // and throw an error with a message indicating that the bid was not found.
     if (!bid) {
-      res.status(404);
-      throw new Error('Bid not found');
+      throw new HttpException('Bid not found', 404);
     }
 
     // If a bid is found, respond with a status of 200 (OK) and send the retrieved bid in the response.
@@ -210,24 +215,20 @@ export class OrdersService {
 
     let order = await this.orderModel.findOne({ _id: bid.order });
 
-    console.log(bid.order);
-
     const userArtist = await this.userModel.findOne({ _id: req.user._id });
 
     // Checking if the bid is found
     if (!bid) {
-      res.status(404);
-      throw new Error('Bid not found');
+      throw new HttpException('Bid not found', 404);
     }
 
     if (userArtist.role === 'user') {
-      throw new Error('You are an user, You cannot update a bid');
+      throw new HttpException('You are an user, You cannot update a bid', 403);
     }
 
     // Checking if the user is authorized to update the bid
     if (bid.user.toString() !== req.user._id.toString()) {
-      res.status(403);
-      throw new Error('You are not authorized to update this bid');
+      throw new HttpException('You are not authorized to update this bid', 403);
     }
 
     const { offer } = updateBidDto;
@@ -250,8 +251,7 @@ export class OrdersService {
 
     // If the order document is not found, respond with a 404 status and throw an error
     if (!order) {
-      res.status(404);
-      throw new Error('Artist not found');
+      throw new HttpException('Order not found', 404);
     }
 
     // Responding with a 200 status and a JSON object containing the updated bid
@@ -273,12 +273,11 @@ export class OrdersService {
 
     // If the bid with the provided ID is not found, respond with a 404 status and throw an error
     if (!bid) {
-      res.status(404);
-      throw new Error('Bid not found');
+      throw new HttpException('Bid not found', 404);
     }
 
     if (userArtist.role === 'user') {
-      throw new Error('You are an user, You cannot delete a bid');
+      throw new HttpException('You are not authorized to delete this bid', 403);
     }
     // Delete the bid from the reviews collection
     await this.bidModel.deleteOne({ _id: req.params.id });
@@ -292,8 +291,7 @@ export class OrdersService {
 
     // If the order document is not found, respond with a 404 status and throw an error
     if (!order) {
-      res.status(404);
-      throw new Error('Order not found');
+      throw new HttpException('Order not found', 404);
     }
 
     // If the bid is successfully deleted, respond with a 200 status and a JSON message
@@ -333,7 +331,7 @@ export class OrdersService {
 
       res.status(201).json({ msg: 'Bid chosen' });
     } else {
-      throw new Error('Bid not found');
+      throw new HttpException('Bid not found', 404);
     }
   }
 
@@ -382,13 +380,11 @@ export class OrdersService {
         res.status(200).json({ msg: 'Notification sent' });
       } else {
         // If the notification is not created, respond with a 404 status and throw an error
-        res.status(404);
-        throw new Error('Notification not created');
+        throw new HttpException('Notification not created', 500);
       }
     } else {
       // If the order, bid and artist are not found, respond with a 404 status and throw an error
-      res.status(404);
-      throw new Error('Resource not found');
+      throw new HttpException('User not found', 404);
     }
   }
 }
